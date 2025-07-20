@@ -8,7 +8,7 @@ const roadmaps = [
     description: "Master modern web development with React, TypeScript, and cutting-edge tools. Build responsive, interactive applications.",
     difficulty: "beginner" as const,
     duration: "6-8 months",
-    learners: 45000,
+    learners: 0,
     skills: ["HTML/CSS", "JavaScript", "React", "TypeScript", "Tailwind"],
     icon: <Code className="h-6 w-6 text-primary" />
   },
@@ -18,7 +18,7 @@ const roadmaps = [
     description: "Learn server-side programming, databases, APIs, and cloud deployment. Build scalable backend systems.",
     difficulty: "intermediate" as const,
     duration: "8-10 months",
-    learners: 32000,
+    learners: 0,
     skills: ["Node.js", "Python", "PostgreSQL", "Docker", "AWS"],
     icon: <Database className="h-6 w-6 text-primary" />
   },
@@ -28,7 +28,7 @@ const roadmaps = [
     description: "Combine frontend and backend skills to build complete web applications from scratch to deployment.",
     difficulty: "advanced" as const,
     duration: "10-12 months",
-    learners: 28000,
+    learners: 0,
     skills: ["React", "Node.js", "MongoDB", "GraphQL", "DevOps"],
     icon: <Globe className="h-6 w-6 text-primary" />
   },
@@ -38,7 +38,7 @@ const roadmaps = [
     description: "Create native and cross-platform mobile apps for iOS and Android using modern frameworks.",
     difficulty: "intermediate" as const,
     duration: "7-9 months",
-    learners: 22000,
+    learners: 0,
     skills: ["React Native", "Flutter", "iOS", "Android", "Firebase"],
     icon: <Smartphone className="h-6 w-6 text-primary" />
   },
@@ -48,7 +48,7 @@ const roadmaps = [
     description: "Dive into machine learning, data analysis, and artificial intelligence to solve complex problems.",
     difficulty: "advanced" as const,
     duration: "12-15 months",
-    learners: 38000,
+    learners: 0,
     skills: ["Python", "TensorFlow", "Pandas", "SQL", "Statistics"],
     icon: <Brain className="h-6 w-6 text-primary" />
   },
@@ -58,7 +58,7 @@ const roadmaps = [
     description: "Protect digital assets and learn ethical hacking, network security, and risk management.",
     difficulty: "expert" as const,
     duration: "10-14 months",
-    learners: 15000,
+    learners: 0,
     skills: ["Network Security", "Ethical Hacking", "Risk Assessment", "Compliance"],
     icon: <Shield className="h-6 w-6 text-primary" />
   },
@@ -68,7 +68,7 @@ const roadmaps = [
     description: "Design beautiful and user-friendly interfaces with modern design principles and tools.",
     difficulty: "beginner" as const,
     duration: "4-6 months",
-    learners: 35000,
+    learners: 0,
     skills: ["Figma", "Adobe XD", "User Research", "Prototyping", "Design Systems"],
     icon: <PenTool className="h-6 w-6 text-primary" />
   },
@@ -78,7 +78,7 @@ const roadmaps = [
     description: "Master online marketing strategies, SEO, social media, and analytics to grow businesses.",
     difficulty: "beginner" as const,
     duration: "3-5 months",
-    learners: 42000,
+    learners: 0,
     skills: ["SEO", "Social Media", "Google Analytics", "Content Marketing", "PPC"],
     icon: <TrendingUp className="h-6 w-6 text-primary" />
   }

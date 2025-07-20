@@ -1,8 +1,11 @@
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Clock, Users, ArrowRight } from "lucide-react";
+import { Clock, Users, ArrowRight, LogIn, CheckCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useRoadmapClicks } from "@/contexts/RoadmapClickContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 interface RoadmapCardProps {
   title: string;
@@ -15,20 +18,6 @@ interface RoadmapCardProps {
   path: string;
 }
 
-const difficultyColors = {
-  beginner: "bg-green-500 text-white",
-  intermediate: "bg-yellow-500 text-white", 
-  advanced: "bg-red-500 text-white",
-  expert: "bg-purple-500 text-white"
-};
-
-const difficultyLabels = {
-  beginner: "Beginner",
-  intermediate: "Intermediate", 
-  advanced: "Advanced",
-  expert: "Expert"
-};
-
 export function RoadmapCard({ 
   title, 
   description, 
@@ -40,20 +29,60 @@ export function RoadmapCard({
   path
 }: RoadmapCardProps) {
   const navigate = useNavigate();
+  const { incrementClick, getClickCount, isAuthenticated, hasUserClicked } = useRoadmapClicks();
+  const { isAuthenticated: authIsAuthenticated } = useAuth();
+  const { toast } = useToast();
+  
+  const handleStartLearning = () => {
+    if (!authIsAuthenticated) {
+      // Show sign-in prompt for unauthenticated users
+      toast({
+        title: "Sign in required",
+        description: "Please sign in to start learning and be counted as a member.",
+        variant: "destructive",
+      });
+      // You can redirect to login page or open signup popup here
+      navigate('/login');
+      return;
+    }
+
+    const wasCounted = incrementClick(path);
+    if (wasCounted) {
+      toast({
+        title: "Welcome to the journey!",
+        description: "You've been added to the learners count. Let's start learning!",
+      });
+    } else if (hasUserClicked(path)) {
+      toast({
+        title: "Already joined!",
+        description: "You're already part of this learning community. Let's continue your journey!",
+      });
+    }
+    navigate(`/roadmap/${path}`);
+  };
+
+  const clickCount = getClickCount(path);
+  const userHasClicked = hasUserClicked(path);
+  
   return (
-    <Card className="roadmap-card group cursor-pointer">
+    <Card className="group hover:shadow-lg transition-all duration-300 cursor-pointer">
       <CardHeader>
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-3 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
+            <div className="p-2 bg-primary/10 rounded-lg">
               {icon}
             </div>
             <div>
-              <CardTitle className="text-xl group-hover:text-primary transition-colors">
-                {title}
-              </CardTitle>
-              <Badge className={`mt-2 ${difficultyColors[difficulty]}`}>
-                {difficultyLabels[difficulty]}
+              <CardTitle className="text-lg">{title}</CardTitle>
+              <Badge 
+                variant={
+                  difficulty === "beginner" ? "default" :
+                  difficulty === "intermediate" ? "secondary" :
+                  difficulty === "advanced" ? "destructive" : "outline"
+                }
+                className="text-xs mt-1"
+              >
+                {difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}
               </Badge>
             </div>
           </div>
@@ -72,7 +101,18 @@ export function RoadmapCard({
           </div>
           <div className="flex items-center gap-1">
             <Users className="h-4 w-4" />
-            <span>{learners.toLocaleString()} learners</span>
+            <span>{clickCount.toLocaleString()} learners</span>
+            {!authIsAuthenticated && (
+              <Badge variant="outline" className="text-xs ml-1">
+                Sign in to join
+              </Badge>
+            )}
+            {authIsAuthenticated && userHasClicked && (
+              <Badge variant="default" className="text-xs ml-1 bg-green-600">
+                <CheckCircle className="h-3 w-3 mr-1" />
+                Joined
+              </Badge>
+            )}
           </div>
         </div>
         
@@ -87,9 +127,28 @@ export function RoadmapCard({
           </div>
         </div>
         
-        <Button className="w-full group-hover:bg-primary group-hover:text-primary-foreground" onClick={() => navigate(`/roadmap/${path}`)}>
-          Start Learning
-          <ArrowRight className="ml-2 h-4 w-4" />
+        <Button 
+          className="w-full group-hover:bg-primary group-hover:text-primary-foreground" 
+          onClick={handleStartLearning}
+          variant={userHasClicked ? "outline" : "default"}
+        >
+          {!authIsAuthenticated ? (
+            <>
+              <LogIn className="mr-2 h-4 w-4" />
+              Sign in to Start
+            </>
+          ) : userHasClicked ? (
+            <>
+              <CheckCircle className="mr-2 h-4 w-4" />
+              Continue Learning
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </>
+          ) : (
+            <>
+              Start Learning
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </>
+          )}
         </Button>
       </CardContent>
     </Card>

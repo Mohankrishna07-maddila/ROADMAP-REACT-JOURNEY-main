@@ -2,11 +2,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { BookOpen, Target, Trophy, Clock, TrendingUp, Calendar, Rocket, Star, CheckCircle, ArrowRight, Plus } from "lucide-react";
-import { Link } from "react-router-dom";
+import { BookOpen, Target, Trophy, Clock, TrendingUp, Calendar, Rocket, Star, CheckCircle, ArrowRight, Plus, LogIn } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import { NavigationHeader } from "@/components/NavigationHeader";
 import { Footer } from "@/components/Footer";
 import { useAuth } from "@/contexts/AuthContext";
+import { useRoadmapClicks } from "@/contexts/RoadmapClickContext";
+import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
 import { db } from "@/lib/supabase";
 
@@ -24,6 +26,9 @@ const Dashboard = () => {
   const { user, isAuthenticated } = useAuth();
   const [userProgress, setUserProgress] = useState<UserProgress | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
+  const { incrementClick, hasUserClicked } = useRoadmapClicks();
+  const { toast } = useToast();
 
   useEffect(() => {
     if (isAuthenticated && user) {
@@ -68,45 +73,82 @@ const Dashboard = () => {
     }
   };
 
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-background">
-        <NavigationHeader />
-        <div className="container mx-auto px-4 py-8">
-          <Card className="max-w-md mx-auto">
-            <CardContent className="pt-6">
-              <p className="text-center text-muted-foreground">
-                Please sign in to view your dashboard.
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-        <Footer />
-      </div>
-    );
-  }
+  const handleStartLearning = (roadmapPath: string) => {
+    if (!isAuthenticated) {
+      toast({
+        title: "Sign in required",
+        description: "Please sign in to start learning and be counted as a member.",
+        variant: "destructive",
+      });
+      navigate('/login');
+      return;
+    }
+
+    const wasCounted = incrementClick(roadmapPath);
+    if (wasCounted) {
+      toast({
+        title: "Welcome to the journey!",
+        description: "You've been added to the learners count. Let's start learning!",
+      });
+    } else if (hasUserClicked(roadmapPath)) {
+      toast({
+        title: "Already joined!",
+        description: "You're already part of this learning community. Let's continue your journey!",
+      });
+    }
+    navigate(`/roadmap/${roadmapPath}`);
+  };
 
   // Check if user is new (no progress data)
-  const isNewUser = !userProgress || 
-    (userProgress.roadmapProgress.length === 0 && 
-     userProgress.skills.length === 0 && 
-     userProgress.assessmentResults.length === 0);
+  const isNewUser = !userProgress || userProgress.roadmapProgress.length === 0;
 
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
         <NavigationHeader />
         <div className="container mx-auto px-4 py-8">
-          <div className="max-w-6xl mx-auto">
-            <div className="animate-pulse">
-              <div className="h-8 bg-muted rounded w-1/3 mb-4"></div>
-              <div className="h-4 bg-muted rounded w-1/2 mb-8"></div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="h-24 bg-muted rounded"></div>
-                ))}
-              </div>
+          <div className="flex items-center justify-center min-h-[400px]">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+              <p className="text-muted-foreground">Loading your dashboard...</p>
             </div>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-background">
+        <NavigationHeader />
+        <div className="container mx-auto px-4 py-8">
+          <div className="max-w-md mx-auto text-center">
+            <Card>
+              <CardContent className="pt-6">
+                <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+                  <LogIn className="h-8 w-8 text-muted-foreground" />
+                </div>
+                <h2 className="text-xl font-semibold mb-2">Sign in Required</h2>
+                <p className="text-muted-foreground mb-6">
+                  Please sign in to view your dashboard and start your learning journey.
+                </p>
+                <div className="space-y-3">
+                  <Button className="w-full" asChild>
+                    <Link to="/login">
+                      <LogIn className="mr-2 h-4 w-4" />
+                      Sign In
+                    </Link>
+                  </Button>
+                  <Button variant="outline" className="w-full" asChild>
+                    <Link to="/signup">
+                      Create Account
+                    </Link>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
         <Footer />
@@ -154,7 +196,7 @@ const Dashboard = () => {
               </Card>
 
               {/* Quick Start Actions */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <Card className="hover:shadow-lg transition-shadow cursor-pointer">
                   <CardContent className="pt-6">
                     <div className="text-center space-y-4">
@@ -198,31 +240,9 @@ const Dashboard = () => {
                     </div>
                   </CardContent>
                 </Card>
-
-                <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-                  <CardContent className="pt-6">
-                    <div className="text-center space-y-4">
-                      <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mx-auto">
-                        <Star className="h-6 w-6 text-purple-600" />
-                      </div>
-                      <div>
-                        <h3 className="font-semibold mb-2">Complete Profile</h3>
-                        <p className="text-sm text-muted-foreground mb-4">
-                          Add your interests and experience to get better recommendations
-                        </p>
-                        <Button className="w-full" asChild>
-                          <Link to="/profile">
-                            Update Profile
-                            <ArrowRight className="ml-2 h-4 w-4" />
-                          </Link>
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
               </div>
 
-              {/* Recommended Roadmaps */}
+              {/* Popular Starting Points */}
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -243,8 +263,19 @@ const Dashboard = () => {
                       <p className="text-sm text-muted-foreground mb-3">
                         Learn HTML, CSS, JavaScript, and React to build modern web applications
                       </p>
-                      <Button size="sm" asChild>
-                        <Link to="/roadmap/frontend">Start Learning</Link>
+                      <Button 
+                        size="sm" 
+                        onClick={() => handleStartLearning("frontend")}
+                        variant={hasUserClicked("frontend") ? "outline" : "default"}
+                      >
+                        {hasUserClicked("frontend") ? (
+                          <>
+                            <CheckCircle className="mr-2 h-4 w-4" />
+                            Continue Learning
+                          </>
+                        ) : (
+                          "Start Learning"
+                        )}
                       </Button>
                     </div>
 
@@ -256,8 +287,19 @@ const Dashboard = () => {
                       <p className="text-sm text-muted-foreground mb-3">
                         Master server-side development with Node.js, databases, and APIs
                       </p>
-                      <Button size="sm" asChild>
-                        <Link to="/roadmap/backend">Start Learning</Link>
+                      <Button 
+                        size="sm" 
+                        onClick={() => handleStartLearning("backend")}
+                        variant={hasUserClicked("backend") ? "outline" : "default"}
+                      >
+                        {hasUserClicked("backend") ? (
+                          <>
+                            <CheckCircle className="mr-2 h-4 w-4" />
+                            Continue Learning
+                          </>
+                        ) : (
+                          "Start Learning"
+                        )}
                       </Button>
                     </div>
                   </div>
@@ -455,21 +497,20 @@ const Dashboard = () => {
                   {/* Skills Overview */}
                   <Card>
                     <CardHeader>
-                      <CardTitle>Your Skills</CardTitle>
+                      <CardTitle>Skills Overview</CardTitle>
                       <CardDescription>
-                        Skills you're developing
+                        Your current skill levels
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
                       {userProgress.skills.length > 0 ? (
                         <div className="space-y-3">
-                          {userProgress.skills.slice(0, 5).map((skill: any) => (
-                            <div key={skill.id} className="space-y-2">
-                              <div className="flex justify-between text-sm">
-                                <span>{skill.name}</span>
-                                <span className="capitalize">{skill.level}</span>
-                              </div>
-                              <Progress value={skill.progress} className="h-2" />
+                          {userProgress.skills.slice(0, 5).map((skill: any, index: number) => (
+                            <div key={index} className="flex items-center justify-between">
+                              <span className="text-sm">{skill.name}</span>
+                              <Badge variant="outline" className="text-xs">
+                                {skill.level}
+                              </Badge>
                             </div>
                           ))}
                         </div>
@@ -477,14 +518,14 @@ const Dashboard = () => {
                         <div className="text-center py-4">
                           <Target className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
                           <p className="text-sm text-muted-foreground">
-                            Take an assessment to see your skills here
+                            Take an assessment to see your skills
                           </p>
                         </div>
                       )}
                     </CardContent>
                   </Card>
 
-                  {/* Recommended Roadmaps */}
+                  {/* Recommended for You */}
                   <Card>
                     <CardHeader>
                       <CardTitle>Recommended for You</CardTitle>
@@ -498,8 +539,20 @@ const Dashboard = () => {
                         <p className="text-sm text-muted-foreground">
                           Master both frontend and backend development
                         </p>
-                        <Button size="sm" variant="outline" className="w-full" asChild>
-                          <Link to="/roadmap/fullstack">Learn More</Link>
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          className="w-full" 
+                          onClick={() => handleStartLearning("full-stack")}
+                        >
+                          {hasUserClicked("full-stack") ? (
+                            <>
+                              <CheckCircle className="mr-2 h-4 w-4" />
+                              Continue Learning
+                            </>
+                          ) : (
+                            "Learn More"
+                          )}
                         </Button>
                       </div>
                       <div className="space-y-2">
@@ -507,8 +560,20 @@ const Dashboard = () => {
                         <p className="text-sm text-muted-foreground">
                           Learn deployment, CI/CD, and infrastructure
                         </p>
-                        <Button size="sm" variant="outline" className="w-full" asChild>
-                          <Link to="/roadmap/devops">Learn More</Link>
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          className="w-full" 
+                          onClick={() => handleStartLearning("devops")}
+                        >
+                          {hasUserClicked("devops") ? (
+                            <>
+                              <CheckCircle className="mr-2 h-4 w-4" />
+                              Continue Learning
+                            </>
+                          ) : (
+                            "Learn More"
+                          )}
                         </Button>
                       </div>
                     </CardContent>

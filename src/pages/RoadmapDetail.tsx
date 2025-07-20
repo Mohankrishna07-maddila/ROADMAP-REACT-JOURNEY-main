@@ -1,53 +1,20 @@
-import { useParams, Link } from "react-router-dom";
 import { NavigationHeader } from "@/components/NavigationHeader";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { ArrowLeft, CheckCircle, Clock, Star, Users, Play } from "lucide-react";
+import { ArrowLeft, Star, Clock, Users, Play, CheckCircle, LogIn } from "lucide-react";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { useRoadmapClicks } from "@/contexts/RoadmapClickContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 const roadmapData = {
-  frontend: {
-    title: "Frontend Development",
-    description: "Master modern frontend technologies and build beautiful, responsive web applications",
-    difficulty: "Beginner",
-    duration: "6-8 months",
-    learners: "45,231",
-    skills: ["HTML/CSS", "JavaScript", "React", "TypeScript", "Tailwind CSS"],
-    steps: [
-      { id: 1, title: "HTML & CSS Fundamentals", completed: true, duration: "2 weeks" },
-      { id: 2, title: "JavaScript Basics", completed: true, duration: "3 weeks" },
-      { id: 3, title: "DOM Manipulation", completed: false, duration: "2 weeks" },
-      { id: 4, title: "React Fundamentals", completed: false, duration: "4 weeks" },
-      { id: 5, title: "State Management", completed: false, duration: "3 weeks" },
-      { id: 6, title: "Advanced React Patterns", completed: false, duration: "4 weeks" },
-      { id: 7, title: "TypeScript Integration", completed: false, duration: "3 weeks" },
-      { id: 8, title: "Testing & Deployment", completed: false, duration: "2 weeks" }
-    ]
-  },
-  backend: {
-    title: "Backend Development",
-    description: "Build robust server-side applications with modern backend technologies",
-    difficulty: "Intermediate",
-    duration: "8-10 months",
-    learners: "32,156",
-    skills: ["Node.js", "Express", "Database Design", "APIs", "Authentication"],
-    steps: [
-      { id: 1, title: "Server Fundamentals", completed: false, duration: "2 weeks" },
-      { id: 2, title: "Node.js & Express", completed: false, duration: "4 weeks" },
-      { id: 3, title: "Database Design", completed: false, duration: "3 weeks" },
-      { id: 4, title: "RESTful APIs", completed: false, duration: "3 weeks" },
-      { id: 5, title: "Authentication & Security", completed: false, duration: "4 weeks" },
-      { id: 6, title: "Testing & Documentation", completed: false, duration: "3 weeks" },
-      { id: 7, title: "DevOps & Deployment", completed: false, duration: "4 weeks" },
-      { id: 8, title: "Microservices Architecture", completed: false, duration: "5 weeks" }
-    ]
-  },
   "data-science": {
-    title: "Data Science",
-    description: "Learn to extract insights from data using Python, machine learning, and statistics",
+    title: "Data Science & AI",
+    description: "Master the fundamentals of data science, machine learning, and artificial intelligence. Learn to extract insights from data and build intelligent systems.",
     difficulty: "Advanced",
     duration: "10-12 months",
     learners: "28,943",
@@ -68,6 +35,10 @@ const roadmapData = {
 export default function RoadmapDetail() {
   const { path } = useParams();
   const [animatedSteps, setAnimatedSteps] = useState<number[]>([]);
+  const { incrementClick, getClickCount, isAuthenticated, hasUserClicked } = useRoadmapClicks();
+  const { isAuthenticated: authIsAuthenticated } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
   
   const roadmap = roadmapData[path as keyof typeof roadmapData];
   
@@ -97,6 +68,36 @@ export default function RoadmapDetail() {
 
   const completedSteps = roadmap.steps.filter(step => step.completed).length;
   const progressPercentage = (completedSteps / roadmap.steps.length) * 100;
+  const clickCount = getClickCount(path || "");
+  const userHasClicked = hasUserClicked(path || "");
+
+  const handleStartLearning = () => {
+    if (!authIsAuthenticated) {
+      toast({
+        title: "Sign in required",
+        description: "Please sign in to start learning and be counted as a member.",
+        variant: "destructive",
+      });
+      navigate('/login');
+      return;
+    }
+
+    if (path) {
+      const wasCounted = incrementClick(path);
+      if (wasCounted) {
+        toast({
+          title: "Welcome to the journey!",
+          description: "You've been added to the learners count. Let's start learning!",
+        });
+      } else if (userHasClicked) {
+        toast({
+          title: "Already joined!",
+          description: "You're already part of this learning community. Let's continue your journey!",
+        });
+      }
+    }
+    // You can add additional logic here like redirecting to the first step
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -127,7 +128,13 @@ export default function RoadmapDetail() {
                   </Badge>
                   <Badge variant="outline" className="flex items-center gap-1">
                     <Users className="h-3 w-3" />
-                    {roadmap.learners} learners
+                    {clickCount.toLocaleString()} learners
+                    {!authIsAuthenticated && (
+                      <span className="ml-1 text-xs">(Sign in to join)</span>
+                    )}
+                    {authIsAuthenticated && userHasClicked && (
+                      <span className="ml-1 text-xs text-green-600">(You're joined!)</span>
+                    )}
                   </Badge>
                 </div>
 
@@ -139,6 +146,22 @@ export default function RoadmapDetail() {
                     ))}
                   </div>
                 </div>
+
+                {!authIsAuthenticated && (
+                  <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p className="text-sm text-blue-700">
+                      <strong>Note:</strong> Sign in to start learning and be counted as a member of our community!
+                    </p>
+                  </div>
+                )}
+
+                {authIsAuthenticated && userHasClicked && (
+                  <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                    <p className="text-sm text-green-700">
+                      <strong>Welcome back!</strong> You're already part of this learning community. Continue your journey!
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* Animated Roadmap Steps */}
@@ -207,8 +230,29 @@ export default function RoadmapDetail() {
                   <CardTitle>Get Started</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <Button className="w-full" size="lg">
-                    Start Learning
+                  <Button 
+                    className="w-full" 
+                    size="lg" 
+                    onClick={handleStartLearning}
+                    variant={userHasClicked ? "outline" : "default"}
+                  >
+                    {!authIsAuthenticated ? (
+                      <>
+                        <LogIn className="mr-2 h-4 w-4" />
+                        Sign in to Start
+                      </>
+                    ) : userHasClicked ? (
+                      <>
+                        <CheckCircle className="mr-2 h-4 w-4" />
+                        Continue Learning
+                        <Play className="ml-2 h-4 w-4" />
+                      </>
+                    ) : (
+                      <>
+                        Start Learning
+                        <Play className="ml-2 h-4 w-4" />
+                      </>
+                    )}
                   </Button>
                   <Button variant="outline" className="w-full">
                     Download PDF Guide

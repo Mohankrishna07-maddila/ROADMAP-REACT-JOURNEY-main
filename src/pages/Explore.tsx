@@ -5,9 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Search, Filter, Star, Clock, Users, TrendingUp, X } from "lucide-react";
-import { Link } from "react-router-dom";
+import { ArrowLeft, Search, Filter, Star, Clock, Users, TrendingUp, X, LogIn, ArrowRight, CheckCircle } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { useRoadmapClicks } from "@/contexts/RoadmapClickContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 const allRoadmaps = [
   {
@@ -15,7 +18,7 @@ const allRoadmaps = [
     description: "Master modern frontend technologies and build beautiful, responsive web applications",
     difficulty: "Beginner",
     duration: "6-8 months",
-    learners: "45,231",
+    learners: "0",
     skills: ["HTML/CSS", "JavaScript", "React", "TypeScript"],
     category: "Development",
     trending: true,
@@ -26,7 +29,7 @@ const allRoadmaps = [
     description: "Build robust server-side applications with modern backend technologies",
     difficulty: "Intermediate",
     duration: "8-10 months",
-    learners: "32,156",
+    learners: "0",
     skills: ["Node.js", "Express", "Database Design", "APIs"],
     category: "Development",
     trending: true,
@@ -37,7 +40,7 @@ const allRoadmaps = [
     description: "Learn to extract insights from data using Python, machine learning, and statistics",
     difficulty: "Advanced", 
     duration: "10-12 months",
-    learners: "28,943",
+    learners: "0",
     skills: ["Python", "Statistics", "Machine Learning", "Data Visualization"],
     category: "Data",
     trending: false,
@@ -48,7 +51,7 @@ const allRoadmaps = [
     description: "Design beautiful and intuitive user experiences for web and mobile applications",
     difficulty: "Beginner",
     duration: "4-6 months", 
-    learners: "41,567",
+    learners: "0",
     skills: ["Figma", "Design Principles", "Prototyping", "User Research"],
     category: "Design",
     trending: true,
@@ -59,7 +62,7 @@ const allRoadmaps = [
     description: "Build native and cross-platform mobile applications for iOS and Android",
     difficulty: "Intermediate",
     duration: "8-10 months",
-    learners: "23,789",
+    learners: "0",
     skills: ["React Native", "Flutter", "iOS", "Android"],
     category: "Development", 
     trending: false,
@@ -70,7 +73,7 @@ const allRoadmaps = [
     description: "Master deployment, automation, and infrastructure management for modern applications",
     difficulty: "Advanced",
     duration: "10-12 months",
-    learners: "19,432",
+    learners: "0",
     skills: ["Docker", "Kubernetes", "AWS", "CI/CD"],
     category: "Operations",
     trending: true,
@@ -81,7 +84,7 @@ const allRoadmaps = [
     description: "Protect systems and data from digital threats with comprehensive security practices",
     difficulty: "Advanced",
     duration: "12-15 months",
-    learners: "16,854",
+    learners: "0",
     skills: ["Network Security", "Ethical Hacking", "Risk Assessment", "Compliance"],
     category: "Security",
     trending: false,
@@ -92,7 +95,7 @@ const allRoadmaps = [
     description: "Deploy and maintain ML models in production environments at scale",
     difficulty: "Advanced",
     duration: "12-14 months", 
-    learners: "15,267",
+    learners: "0",
     skills: ["MLOps", "TensorFlow", "Model Deployment", "Data Engineering"],
     category: "Data",
     trending: true,
@@ -108,6 +111,10 @@ export default function Explore() {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedDifficulty, setSelectedDifficulty] = useState("All");
   const [showFilters, setShowFilters] = useState(false);
+  const navigate = useNavigate();
+  const { incrementClick, getClickCount, isAuthenticated, hasUserClicked } = useRoadmapClicks();
+  const { isAuthenticated: authIsAuthenticated } = useAuth();
+  const { toast } = useToast();
 
   const filteredRoadmaps = allRoadmaps.filter(roadmap => {
     const matchesSearch = roadmap.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -137,6 +144,33 @@ export default function Explore() {
 
   const hasActiveFilters = searchTerm || selectedCategory !== "All" || selectedDifficulty !== "All";
 
+  const handleStartLearning = (roadmapPath: string) => {
+    if (!authIsAuthenticated) {
+      // Show sign-in prompt for unauthenticated users
+      toast({
+        title: "Sign in required",
+        description: "Please sign in to start learning and be counted as a member.",
+        variant: "destructive",
+      });
+      navigate('/login');
+      return;
+    }
+
+    const wasCounted = incrementClick(roadmapPath);
+    if (wasCounted) {
+      toast({
+        title: "Welcome to the journey!",
+        description: "You've been added to the learners count. Let's start learning!",
+      });
+    } else if (hasUserClicked(roadmapPath)) {
+      toast({
+        title: "Already joined!",
+        description: "You're already part of this learning community. Let's continue your journey!",
+      });
+    }
+    navigate(`/roadmap/${roadmapPath}`);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <NavigationHeader />
@@ -152,6 +186,13 @@ export default function Explore() {
           <p className="text-xl text-muted-foreground">
             Discover comprehensive learning paths for every tech career
           </p>
+          {!authIsAuthenticated && (
+            <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm text-blue-700">
+                <strong>Note:</strong> Sign in to start learning and be counted as a member of our community!
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Search Bar */}
@@ -206,178 +247,169 @@ export default function Explore() {
                 </Button>
               )}
             </div>
-            <p className="text-sm text-muted-foreground">
-              {filteredRoadmaps.length} of {allRoadmaps.length} roadmaps
-            </p>
           </div>
 
-          {/* Filter Options */}
           {showFilters && (
-            <Card className="mb-6">
-              <CardContent className="pt-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Category Filter */}
-                  <div>
-                    <h3 className="font-medium mb-3 text-sm">Category</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {categories.map(category => (
-                        <Button
-                          key={category}
-                          variant={selectedCategory === category ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => setSelectedCategory(category)}
-                          className="text-xs"
-                        >
-                          {category}
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Difficulty Filter */}
-                  <div>
-                    <h3 className="font-medium mb-3 text-sm">Difficulty Level</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {difficulties.map(difficulty => (
-                        <Button
-                          key={difficulty}
-                          variant={selectedDifficulty === difficulty ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => setSelectedDifficulty(difficulty)}
-                          className="text-xs"
-                        >
-                          {difficulty}
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
+            <div className="space-y-4 p-4 border rounded-lg bg-muted/30">
+              <div>
+                <h3 className="font-medium mb-2">Category</h3>
+                <div className="flex flex-wrap gap-2">
+                  {categories.map(category => (
+                    <Button
+                      key={category}
+                      variant={selectedCategory === category ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setSelectedCategory(category)}
+                    >
+                      {category}
+                    </Button>
+                  ))}
                 </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Active Filters Display */}
-          {hasActiveFilters && (
-            <div className="flex flex-wrap gap-2 mb-4">
-              {searchTerm && (
-                <Badge variant="secondary" className="flex items-center gap-1">
-                  Search: "{searchTerm}"
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-4 w-4 p-0 ml-1"
-                    onClick={() => setSearchTerm("")}
-                  >
-                    <X className="h-3 w-3" />
-                  </Button>
-                </Badge>
-              )}
-              {selectedCategory !== "All" && (
-                <Badge variant="secondary" className="flex items-center gap-1">
-                  Category: {selectedCategory}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-4 w-4 p-0 ml-1"
-                    onClick={() => setSelectedCategory("All")}
-                  >
-                    <X className="h-3 w-3" />
-                  </Button>
-                </Badge>
-              )}
-              {selectedDifficulty !== "All" && (
-                <Badge variant="secondary" className="flex items-center gap-1">
-                  Difficulty: {selectedDifficulty}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-4 w-4 p-0 ml-1"
-                    onClick={() => setSelectedDifficulty("All")}
-                  >
-                    <X className="h-3 w-3" />
-                  </Button>
-                </Badge>
-              )}
+              </div>
+              
+              <div>
+                <h3 className="font-medium mb-2">Difficulty</h3>
+                <div className="flex flex-wrap gap-2">
+                  {difficulties.map(difficulty => (
+                    <Button
+                      key={difficulty}
+                      variant={selectedDifficulty === difficulty ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setSelectedDifficulty(difficulty)}
+                    >
+                      {difficulty}
+                    </Button>
+                  ))}
+                </div>
+              </div>
             </div>
           )}
         </div>
 
+        {/* Results */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between">
+            <p className="text-muted-foreground">
+              {filteredRoadmaps.length} roadmap{filteredRoadmaps.length !== 1 ? 's' : ''} found
+            </p>
+            {filteredRoadmaps.length > 0 && (
+              <div className="flex items-center gap-2">
+                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">Most popular first</span>
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* Roadmaps Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-          {filteredRoadmaps.map((roadmap, index) => (
-            <Card key={index} className="hover:shadow-lg transition-all duration-300 group">
-              <CardHeader>
-                <div className="flex justify-between items-start mb-2">
-                  <Badge className={getDifficultyColor(roadmap.difficulty)}>
-                    {roadmap.difficulty}
-                  </Badge>
-                  {roadmap.trending && (
-                    <Badge variant="secondary" className="flex items-center gap-1">
-                      <TrendingUp className="h-3 w-3" />
-                      Trending
-                    </Badge>
-                  )}
-                </div>
-                <CardTitle className="group-hover:text-primary transition-colors">
-                  {roadmap.title}
-                </CardTitle>
-                <p className="text-muted-foreground text-sm">
-                  {roadmap.description}
-                </p>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                    <span className="flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
-                      {roadmap.duration}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Users className="h-3 w-3" />
-                      {roadmap.learners}
-                    </span>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredRoadmaps.map((roadmap, index) => {
+            const userHasClicked = hasUserClicked(roadmap.path);
+            
+            return (
+              <Card key={index} className="hover:shadow-lg transition-all duration-300">
+                <CardHeader>
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <CardTitle className="text-lg mb-2">{roadmap.title}</CardTitle>
+                      <Badge className={`${getDifficultyColor(roadmap.difficulty)} text-xs`}>
+                        {roadmap.difficulty}
+                      </Badge>
+                    </div>
+                    {roadmap.trending && (
+                      <Badge variant="destructive" className="text-xs">
+                        Trending
+                      </Badge>
+                    )}
                   </div>
-                  
-                  <div>
-                    <p className="text-sm font-medium mb-2">Key Skills:</p>
-                    <div className="flex flex-wrap gap-1">
-                      {roadmap.skills.slice(0, 3).map((skill, skillIndex) => (
-                        <Badge key={skillIndex} variant="outline" className="text-xs">
-                          {skill}
-                        </Badge>
-                      ))}
-                      {roadmap.skills.length > 3 && (
-                        <Badge variant="outline" className="text-xs">
-                          +{roadmap.skills.length - 3} more
-                        </Badge>
-                      )}
+                </CardHeader>
+
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                      <span className="flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        {roadmap.duration}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Users className="h-3 w-3" />
+                        {getClickCount(roadmap.path).toLocaleString()}
+                        {!authIsAuthenticated && (
+                          <Badge variant="outline" className="text-xs ml-1">
+                            Sign in to join
+                          </Badge>
+                        )}
+                        {authIsAuthenticated && userHasClicked && (
+                          <Badge variant="default" className="text-xs ml-1 bg-green-600">
+                            <CheckCircle className="h-3 w-3 mr-1" />
+                            Joined
+                          </Badge>
+                        )}
+                      </span>
+                    </div>
+                    
+                    <div>
+                      <p className="text-sm font-medium mb-2">Key Skills:</p>
+                      <div className="flex flex-wrap gap-1">
+                        {roadmap.skills.slice(0, 3).map((skill, skillIndex) => (
+                          <Badge key={skillIndex} variant="outline" className="text-xs">
+                            {skill}
+                          </Badge>
+                        ))}
+                        {roadmap.skills.length > 3 && (
+                          <Badge variant="outline" className="text-xs">
+                            +{roadmap.skills.length - 3} more
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <Button 
+                        className="flex-1" 
+                        onClick={() => handleStartLearning(roadmap.path)}
+                        variant={userHasClicked ? "outline" : "default"}
+                      >
+                        {!authIsAuthenticated ? (
+                          <>
+                            <LogIn className="mr-2 h-4 w-4" />
+                            Sign in to Start
+                          </>
+                        ) : userHasClicked ? (
+                          <>
+                            <CheckCircle className="mr-2 h-4 w-4" />
+                            Continue Learning
+                            <ArrowRight className="ml-2 h-4 w-4" />
+                          </>
+                        ) : (
+                          <>
+                            Start Learning
+                            <ArrowRight className="ml-2 h-4 w-4" />
+                          </>
+                        )}
+                      </Button>
+                      <Button variant="outline" size="sm">
+                        <Star className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
-
-                  <div className="flex gap-2">
-                    <Button className="flex-1" asChild>
-                      <Link to={`/roadmap/${roadmap.path}`}>
-                        Start Learning
-                      </Link>
-                    </Button>
-                    <Button variant="outline" size="sm">
-                      <Star className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
 
         {filteredRoadmaps.length === 0 && (
           <div className="text-center py-12">
+            <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+              <Search className="h-8 w-8 text-muted-foreground" />
+            </div>
             <h3 className="text-lg font-semibold mb-2">No roadmaps found</h3>
             <p className="text-muted-foreground mb-4">
               Try adjusting your search terms or filters
             </p>
-            <Button onClick={clearAllFilters}>
-              Clear Filters
+            <Button variant="outline" onClick={clearAllFilters}>
+              Clear all filters
             </Button>
           </div>
         )}
