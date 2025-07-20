@@ -20,6 +20,7 @@ import {
   TrendingUp
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useRef } from "react";
 
 const allEvents = [
   // Upcoming Events
@@ -234,6 +235,7 @@ export default function Events() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [calendarFilter, setCalendarFilter] = useState<'all' | 'upcoming' | 'past'>('all');
+  const tabsRef = useRef<HTMLDivElement>(null);
   const getEventIcon = (type: string) => {
     switch (type) {
       case "Workshop": return <BookOpen className="h-4 w-4" />;
@@ -379,8 +381,19 @@ export default function Events() {
           <p className="text-xl text-muted-foreground">
             Join our upcoming workshops, panels, and meetups to learn, network, and grow together
           </p>
-          
-
+          <div className="mt-4">
+            <Button
+              variant="outline"
+              onClick={() => {
+                const calendarTab = document.querySelector('[data-value="calendar"]') as HTMLElement;
+                if (calendarTab) calendarTab.click();
+                if (tabsRef.current) tabsRef.current.scrollIntoView({ behavior: 'smooth' });
+              }}
+            >
+              <Calendar className="mr-2 h-4 w-4" />
+              View Calendar
+            </Button>
+          </div>
         </div>
 
         {/* Event Stats */}
@@ -410,11 +423,14 @@ export default function Events() {
         </div>
 
         <Tabs defaultValue="upcoming" className="space-y-6">
-          <TabsList>
+          <TabsList ref={tabsRef} className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b mb-4">
             <TabsTrigger value="upcoming">Upcoming Events</TabsTrigger>
             <TabsTrigger value="favorites">Favorites ({favoriteEvents.length})</TabsTrigger>
             <TabsTrigger value="past">Past Events</TabsTrigger>
-            <TabsTrigger value="calendar">Calendar View</TabsTrigger>
+            <TabsTrigger value="calendar">
+              <Calendar className="mr-2 h-4 w-4" />
+              Calendar View
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="upcoming" className="space-y-6">
