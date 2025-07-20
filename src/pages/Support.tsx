@@ -43,7 +43,7 @@ const faqData = [
   },
   {
     question: "How do I report a broken link or incorrect information?",
-    answer: "Use our contact form below or email us directly at support@careerpath.com. We'll fix it within 24 hours."
+    answer: "Use our contact form below or email us directly at maddilamohankrishna32@gmail.com. We'll fix it within 24 hours."
   },
   {
     question: "Is my personal data secure?",
@@ -262,7 +262,7 @@ export default function Support() {
                         <Mail className="h-4 w-4 text-muted-foreground" />
                         <div>
                           <p className="font-medium">Email</p>
-                          <p className="text-sm text-muted-foreground">support@careerpath.com</p>
+                          <p className="text-sm text-muted-foreground">maddilamohankrishna32@gmail.com</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-3">

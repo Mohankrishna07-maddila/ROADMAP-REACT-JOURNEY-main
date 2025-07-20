@@ -1,6 +1,8 @@
 import { Target, Github, Linkedin, Mail } from "lucide-react";
 import { Link } from "react-router-dom";
 
+const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
+
 export function Footer() {
   return (
     <footer className="bg-muted/30 border-t">
@@ -39,14 +41,14 @@ export function Footer() {
           <div className="space-y-4">
             <h3 className="font-semibold">Roadmaps</h3>
             <ul className="space-y-2 text-sm">
-              <li><Link to="/roadmap/frontend" className="text-muted-foreground hover:text-foreground transition-colors">Frontend Development</Link></li>
-              <li><Link to="/roadmap/backend" className="text-muted-foreground hover:text-foreground transition-colors">Backend Development</Link></li>
-              <li><Link to="/roadmap/data-science" className="text-muted-foreground hover:text-foreground transition-colors">Data Science</Link></li>
-              <li><Link to="/roadmap/uiux" className="text-muted-foreground hover:text-foreground transition-colors">UI/UX Design</Link></li>
-              <li><Link to="/roadmap/mobile" className="text-muted-foreground hover:text-foreground transition-colors">Mobile Development</Link></li>
-              <li><Link to="/roadmap/devops" className="text-muted-foreground hover:text-foreground transition-colors">DevOps Engineering</Link></li>
-              <li><Link to="/roadmap/cybersecurity" className="text-muted-foreground hover:text-foreground transition-colors">Cybersecurity</Link></li>
-              <li><Link to="/roadmap/ml-engineer" className="text-muted-foreground hover:text-foreground transition-colors">Machine Learning</Link></li>
+              <li><Link to="/roadmap/frontend" onClick={scrollToTop} className="text-muted-foreground hover:text-foreground transition-colors">Frontend Development</Link></li>
+              <li><Link to="/roadmap/backend" onClick={scrollToTop} className="text-muted-foreground hover:text-foreground transition-colors">Backend Development</Link></li>
+              <li><Link to="/roadmap/data-science" onClick={scrollToTop} className="text-muted-foreground hover:text-foreground transition-colors">Data Science</Link></li>
+              <li><Link to="/roadmap/uiux" onClick={scrollToTop} className="text-muted-foreground hover:text-foreground transition-colors">UI/UX Design</Link></li>
+              <li><Link to="/roadmap/mobile" onClick={scrollToTop} className="text-muted-foreground hover:text-foreground transition-colors">Mobile Development</Link></li>
+              <li><Link to="/roadmap/devops" onClick={scrollToTop} className="text-muted-foreground hover:text-foreground transition-colors">DevOps Engineering</Link></li>
+              <li><Link to="/roadmap/cybersecurity" onClick={scrollToTop} className="text-muted-foreground hover:text-foreground transition-colors">Cybersecurity</Link></li>
+              <li><Link to="/roadmap/ml-engineer" onClick={scrollToTop} className="text-muted-foreground hover:text-foreground transition-colors">Machine Learning</Link></li>
             </ul>
           </div>
           
@@ -54,10 +56,10 @@ export function Footer() {
           <div className="space-y-4">
             <h3 className="font-semibold">Resources</h3>
             <ul className="space-y-2 text-sm">
-              <li><Link to="/assessment" className="text-muted-foreground hover:text-foreground transition-colors">Skill Assessment</Link></li>
-              <li><Link to="/recommendations" className="text-muted-foreground hover:text-foreground transition-colors">Learning Recommendations</Link></li>
-              <li><Link to="/explore" className="text-muted-foreground hover:text-foreground transition-colors">All Roadmaps</Link></li>
-              <li><Link to="/google-workspace" className="text-muted-foreground hover:text-foreground transition-colors">Google Workspace</Link></li>
+              <li><Link to="/assessment" onClick={scrollToTop} className="text-muted-foreground hover:text-foreground transition-colors">Skill Assessment</Link></li>
+              <li><Link to="/recommendations" onClick={scrollToTop} className="text-muted-foreground hover:text-foreground transition-colors">Learning Recommendations</Link></li>
+              <li><Link to="/explore" onClick={scrollToTop} className="text-muted-foreground hover:text-foreground transition-colors">All Roadmaps</Link></li>
+              <li><Link to="/google-workspace" onClick={scrollToTop} className="text-muted-foreground hover:text-foreground transition-colors">Google Workspace</Link></li>
               <li><a href="https://github.com/Mohankrishna07-maddila" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors">GitHub</a></li>
             </ul>
           </div>
@@ -66,10 +68,10 @@ export function Footer() {
           <div className="space-y-4">
             <h3 className="font-semibold">Support</h3>
             <ul className="space-y-2 text-sm">
-              <li><Link to="/support" className="text-muted-foreground hover:text-foreground transition-colors">Help Center</Link></li>
-              <li><Link to="/contact" className="text-muted-foreground hover:text-foreground transition-colors">Contact Us</Link></li>
-              <li><Link to="/privacy" className="text-muted-foreground hover:text-foreground transition-colors">Privacy Policy</Link></li>
-              <li><Link to="/terms" className="text-muted-foreground hover:text-foreground transition-colors">Terms of Service</Link></li>
+              <li><Link to="/support" onClick={scrollToTop} className="text-muted-foreground hover:text-foreground transition-colors">Help Center</Link></li>
+              <li><Link to="/contact" onClick={scrollToTop} className="text-muted-foreground hover:text-foreground transition-colors">Contact Us</Link></li>
+              <li><Link to="/privacy" onClick={scrollToTop} className="text-muted-foreground hover:text-foreground transition-colors">Privacy Policy</Link></li>
+              <li><Link to="/terms" onClick={scrollToTop} className="text-muted-foreground hover:text-foreground transition-colors">Terms of Service</Link></li>
             </ul>
           </div>
         </div>

@@ -169,6 +169,7 @@ export default function Explore() {
       });
     }
     navigate(`/roadmap/${roadmapPath}`);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   return (

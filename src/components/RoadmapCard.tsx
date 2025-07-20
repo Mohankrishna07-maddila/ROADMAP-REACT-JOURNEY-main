@@ -71,6 +71,7 @@ export function RoadmapCard({
       });
     }
     navigate(`/roadmap/${path}`);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const clickCount = getClickCount(path);

@@ -58,7 +58,7 @@ export default function RoadmapDetail() {
         <div className="container mx-auto px-4 py-20 text-center">
           <h1 className="text-2xl font-bold mb-4">Roadmap not found</h1>
           <Link to="/">
-            <Button>Go Back Home</Button>
+            <Button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>Go Back Home</Button>
           </Link>
         </div>
         <Footer />
@@ -107,14 +107,14 @@ export default function RoadmapDetail() {
         {/* Back to Home Button */}
         <div className="mb-4">
           <Button asChild variant="ghost" size="sm" className="inline-flex items-center gap-2">
-            <Link to="/">
+            <Link to="/" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
               <ArrowLeft className="h-4 w-4" />
               Back to Home
             </Link>
           </Button>
         </div>
         <div className="mb-6">
-          <Link to="/" className="inline-flex items-center text-muted-foreground hover:text-foreground mb-4">
+          <Link to="/" className="inline-flex items-center text-muted-foreground hover:text-foreground mb-4" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Roadmaps
           </Link>

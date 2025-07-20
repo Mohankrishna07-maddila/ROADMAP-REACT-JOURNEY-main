@@ -939,7 +939,10 @@ const Profile = () => {
                     </div>
                     <div className="space-y-2">
                       <Label className="text-sm text-muted-foreground">Account Status</Label>
-                      <Badge variant="default">Active</Badge>
+                      <div className="flex items-center gap-2">
+                        <span className="inline-block w-2 h-2 rounded-full bg-green-500 mr-1 mt-1 sm:mt-0"></span>
+                        <Badge variant="default" className="mt-1 sm:mt-0">Active</Badge>
+                      </div>
                     </div>
                   </div>
                 </CardContent>
