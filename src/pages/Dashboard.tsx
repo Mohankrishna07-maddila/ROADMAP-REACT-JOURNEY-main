@@ -2,7 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { BookOpen, Target, Trophy, Clock, TrendingUp, Calendar, Rocket, Star, CheckCircle, ArrowRight, Plus, LogIn } from "lucide-react";
+import { BookOpen, Target, Trophy, Clock, TrendingUp, Calendar, Rocket, Star, CheckCircle, ArrowRight, Plus, LogIn, ArrowLeft } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { NavigationHeader } from "@/components/NavigationHeader";
 import { Footer } from "@/components/Footer";
@@ -161,6 +161,15 @@ const Dashboard = () => {
       <NavigationHeader />
       
       <div className="container mx-auto px-4 py-8">
+        {/* Back to Home Button */}
+        <div className="max-w-6xl mx-auto mb-4">
+          <Button asChild variant="ghost" size="sm" className="inline-flex items-center gap-2">
+            <Link to="/">
+              <ArrowLeft className="h-4 w-4" />
+              Back to Home
+            </Link>
+          </Button>
+        </div>
         <div className="max-w-6xl mx-auto">
           {/* Welcome Header */}
           <div className="mb-8">

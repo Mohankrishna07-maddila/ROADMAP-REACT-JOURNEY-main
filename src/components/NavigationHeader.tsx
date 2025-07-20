@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Menu, User, BookOpen, Target, Users, LogOut } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Menu, User, BookOpen, Target, Users, LogOut, Briefcase, Award, Activity, Mail } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   DropdownMenu,
@@ -12,12 +12,27 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { useState } from "react";
+
+const sidebarLinks = [
+  { label: "Profile", icon: <User className="h-5 w-5" />, to: "/profile" },
+  { label: "Projects", icon: <Briefcase className="h-5 w-5" />, to: "/dashboard" },
+  { label: "Roadmaps", icon: <BookOpen className="h-5 w-5" />, to: "/explore" },
+  { label: "Certifications", icon: <Award className="h-5 w-5" />, to: "/recommendations" },
+  { label: "Community", icon: <Users className="h-5 w-5" />, to: "/community" },
+  { label: "Activity", icon: <Activity className="h-5 w-5" />, to: "/profile#activity" },
+  { label: "Contact Us", icon: <Mail className="h-5 w-5" />, to: "/contact" },
+];
 
 export function NavigationHeader() {
   const { user, isAuthenticated, logout } = useAuth();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const navigate = useNavigate();
 
   const handleLogout = async () => {
     await logout();
+    setSidebarOpen(false);
   };
 
   const getUserInitials = () => {
@@ -65,17 +80,17 @@ export function NavigationHeader() {
                     </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
-                                  <DropdownMenuContent className="w-56" align="end" forceMount>
-                    <DropdownMenuLabel className="font-normal">
-                      <div className="flex flex-col space-y-1">
-                        <p className="text-sm font-medium leading-none">
-                          {user?.first_name} {user?.last_name}
-                        </p>
-                        <p className="text-xs leading-none text-muted-foreground">
-                          {user?.email}
-                        </p>
-                      </div>
-                    </DropdownMenuLabel>
+                <DropdownMenuContent className="w-56" align="end" forceMount>
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none">
+                        {user?.first_name} {user?.last_name}
+                      </p>
+                      <p className="text-xs leading-none text-muted-foreground">
+                        {user?.email}
+                      </p>
+                    </div>
+                  </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
                     <Link to="/profile">Profile</Link>
@@ -104,9 +119,53 @@ export function NavigationHeader() {
                 </Button>
               </>
             )}
-            <Button variant="ghost" size="sm" className="md:hidden">
-              <Menu className="h-5 w-5" />
-            </Button>
+            {/* Hamburger menu for mobile */}
+            <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+              <SheetTrigger asChild>
+                {/* Button for opening sidebar on mobile */}
+                <Button variant="ghost" size="sm" className="md:hidden">
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-64 p-0">
+                <div className="flex flex-col h-full">
+                  <div className="flex items-center gap-2 px-4 py-4 border-b">
+                    <Avatar className="h-10 w-10">
+                      <AvatarImage src={user?.profile_picture} alt={user?.first_name} />
+                      <AvatarFallback>{getUserInitials()}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <div className="font-semibold text-base">{user?.first_name} {user?.last_name}</div>
+                      <div className="text-xs text-muted-foreground">{user?.email}</div>
+                    </div>
+                  </div>
+                  <nav className="flex-1 flex flex-col gap-1 px-2 py-4">
+                    {sidebarLinks.map((item) => (
+                      <Button
+                        key={item.label}
+                        variant="ghost"
+                        className="justify-start w-full text-left text-base gap-3"
+                        onClick={() => {
+                          setSidebarOpen(false);
+                          navigate(item.to);
+                        }}
+                      >
+                        {item.icon}
+                        {item.label}
+                      </Button>
+                    ))}
+                  </nav>
+                  <div className="border-t px-2 py-3">
+                    {isAuthenticated && (
+                      <Button variant="outline" className="w-full" onClick={handleLogout}>
+                        <LogOut className="mr-2 h-4 w-4" />
+                        Log out
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </SheetContent>
+            </Sheet>
           </div>
         </div>
       </div>

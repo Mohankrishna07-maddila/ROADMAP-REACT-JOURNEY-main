@@ -4,9 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, BookOpen, Code, Users, Target, Clock, Star, ExternalLink, Play, Download, BookMarked } from "lucide-react";
+import { ArrowLeft, BookOpen, Code, Users, Target, Clock, Star, ExternalLink, Play, Download, BookMarked, LogIn, CheckCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState } from "react";
+import { useRoadmapClicks } from "@/contexts/RoadmapClickContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 const courses = [
   {
@@ -158,6 +161,9 @@ const certifications = [
 
 export default function Recommendations() {
   const [previewModal, setPreviewModal] = useState<string | null>(null);
+  const { incrementClick, getClickCount, isAuthenticated, hasUserClicked } = useRoadmapClicks();
+  const { isAuthenticated: authIsAuthenticated } = useAuth();
+  const { toast } = useToast();
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -172,7 +178,28 @@ export default function Recommendations() {
     window.open(previewUrl, '_blank');
   };
 
-  const handleCourseEnroll = (courseUrl: string) => {
+  const handleCourseEnroll = (courseTitle: string, courseUrl: string) => {
+    if (!authIsAuthenticated) {
+      toast({
+        title: "Sign in required",
+        description: "Please sign in to enroll and be counted as a learner.",
+        variant: "destructive",
+      });
+      window.location.href = '/login';
+      return;
+    }
+    const wasCounted = incrementClick(`course-${courseTitle}`);
+    if (wasCounted) {
+      toast({
+        title: "Welcome to the course!",
+        description: "You've been added to the learners count. Happy learning!",
+      });
+    } else if (hasUserClicked(`course-${courseTitle}`)) {
+      toast({
+        title: "Already joined!",
+        description: "You're already counted as a learner for this course.",
+      });
+    }
     window.open(courseUrl, '_blank');
   };
 
@@ -233,62 +260,96 @@ export default function Recommendations() {
 
             <TabsContent value="courses" className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {courses.map((course, index) => (
-                  <Card key={index} className="hover:shadow-lg transition-shadow">
-                    <CardHeader>
-                      <div className="flex justify-between items-start mb-2">
-                        <Badge variant={getPriorityColor(course.priority)}>
-                          {course.priority} priority
-                        </Badge>
-                        <Badge variant="outline" className="bg-primary/5">
-                          {course.price}
-                        </Badge>
-                      </div>
-                      <CardTitle className="text-xl">{course.title}</CardTitle>
-                      <p className="text-muted-foreground">{course.description}</p>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-4">
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                          <span className="flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            {course.duration}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Star className="h-3 w-3" />
-                            {course.rating}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Users className="h-3 w-3" />
-                            {course.students}
-                          </span>
+                {courses.map((course, index) => {
+                  const courseKey = `course-${course.title}`;
+                  const userHasClicked = hasUserClicked(courseKey);
+                  return (
+                    <Card key={index} className="hover:shadow-lg transition-shadow">
+                      <CardHeader>
+                        <div className="flex justify-between items-start mb-2">
+                          <Badge variant={getPriorityColor(course.priority)}>
+                            {course.priority} priority
+                          </Badge>
+                          <Badge variant="outline" className="bg-primary/5">
+                            {course.price}
+                          </Badge>
                         </div>
-                        
-                        <div>
-                          <p className="text-sm font-medium mb-2">Skills you'll learn:</p>
-                          <div className="flex flex-wrap gap-1">
-                            {course.skills.map((skill, skillIndex) => (
-                              <Badge key={skillIndex} variant="outline" className="text-xs">
-                                {skill}
-                              </Badge>
-                            ))}
+                        <CardTitle className="text-xl">{course.title}</CardTitle>
+                        <p className="text-muted-foreground">{course.description}</p>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                            <span className="flex items-center gap-1">
+                              <Clock className="h-3 w-3" />
+                              {course.duration}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Star className="h-3 w-3" />
+                              {course.rating}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Users className="h-3 w-3" />
+                              {getClickCount(courseKey).toLocaleString()} learners
+                              {!authIsAuthenticated && (
+                                <Badge variant="outline" className="text-xs ml-1">
+                                  Sign in to join
+                                </Badge>
+                              )}
+                              {authIsAuthenticated && userHasClicked && (
+                                <Badge variant="default" className="text-xs ml-1 bg-green-600">
+                                  <CheckCircle className="h-3 w-3 mr-1" />
+                                  Joined
+                                </Badge>
+                              )}
+                            </span>
+                          </div>
+                          
+                          <div>
+                            <p className="text-sm font-medium mb-2">Skills you'll learn:</p>
+                            <div className="flex flex-wrap gap-1">
+                              {course.skills.map((skill, skillIndex) => (
+                                <Badge key={skillIndex} variant="outline" className="text-xs">
+                                  {skill}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div className="flex gap-2">
+                            <Button 
+                              className="flex-1" 
+                              onClick={() => handleCourseEnroll(course.title, course.courseUrl)}
+                              variant={userHasClicked ? "outline" : "default"}
+                            >
+                              {!authIsAuthenticated ? (
+                                <>
+                                  <LogIn className="mr-2 h-4 w-4" />
+                                  Sign in to Enroll
+                                </>
+                              ) : userHasClicked ? (
+                                <>
+                                  <CheckCircle className="mr-2 h-4 w-4" />
+                                  Continue Course
+                                  <ExternalLink className="ml-2 h-4 w-4" />
+                                </>
+                              ) : (
+                                <>
+                                  Enroll Now
+                                  <ExternalLink className="ml-2 h-4 w-4" />
+                                </>
+                              )}
+                            </Button>
+                            <Button variant="outline" onClick={() => handleCoursePreview(course.previewUrl)}>
+                              <Play className="mr-2 h-4 w-4" />
+                              Preview
+                            </Button>
                           </div>
                         </div>
-
-                        <div className="flex gap-2">
-                          <Button className="flex-1" onClick={() => handleCourseEnroll(course.courseUrl)}>
-                            Enroll Now
-                            <ExternalLink className="ml-2 h-4 w-4" />
-                          </Button>
-                          <Button variant="outline" onClick={() => handleCoursePreview(course.previewUrl)}>
-                            <Play className="mr-2 h-4 w-4" />
-                            Preview
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                      </CardContent>
+                    </Card>
+                  );
+                })}
               </div>
             </TabsContent>
 

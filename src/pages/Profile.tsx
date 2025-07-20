@@ -11,13 +11,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { User, Mail, MapPin, Briefcase, Calendar, Edit, Save, X, Camera, Shield, Bell, Globe, Lock, Eye, EyeOff, Trash2, Download, Upload, Map, ClipboardCheck } from "lucide-react";
+import { User, Mail, MapPin, Briefcase, Calendar, Edit, Save, X, Camera, Shield, Bell, Globe, Lock, Eye, EyeOff, Trash2, Download, Upload, Map, ClipboardCheck, ArrowLeft } from "lucide-react";
 import { NavigationHeader } from "@/components/NavigationHeader";
 import { Footer } from "@/components/Footer";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { authAPI } from "@/services/supabaseApi";
 import { supabase } from "@/lib/supabase";
+import { Link } from "react-router-dom";
 
 const Profile = () => {
   const { user, isAuthenticated, updateProfile, logout } = useAuth();
@@ -524,17 +525,26 @@ const Profile = () => {
       
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
+          {/* Back to Home Button */}
+          <div className="mb-4">
+            <Button asChild variant="ghost" size="sm" className="inline-flex items-center gap-2">
+              <Link to="/">
+                <ArrowLeft className="h-4 w-4" />
+                Back to Home
+              </Link>
+            </Button>
+          </div>
           {/* Profile Header */}
           <Card className="mb-6">
             <CardContent className="pt-6">
-              <div className="flex items-center gap-6">
-                <div className="relative">
+              <div className="flex flex-col md:flex-row md:items-center gap-4 w-full">
+                <div className="relative flex-shrink-0 flex justify-center md:block">
                   <Avatar className="h-24 w-24">
                     <AvatarImage src={user?.profile_picture} alt={user?.first_name} />
                     <AvatarFallback className="text-2xl">{getUserInitials()}</AvatarFallback>
                   </Avatar>
                   {isEditing && (
-                    <div className="absolute -bottom-2 -right-2">
+                    <div className="absolute -bottom-2 right-0 md:-right-2">
                       <input
                         ref={fileInputRef}
                         type="file"
@@ -558,15 +568,16 @@ const Profile = () => {
                     </div>
                   )}
                 </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-4 mb-2">
-                    <h1 className="text-3xl font-bold">
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2 w-full">
+                    <h1 className="text-2xl md:text-3xl font-bold truncate">
                       {user?.first_name} {user?.last_name}
                     </h1>
                     {!isEditing && (
                       <Button
                         variant="outline"
                         size="sm"
+                        className="w-fit"
                         onClick={() => setIsEditing(true)}
                       >
                         <Edit className="mr-2 h-4 w-4" />
@@ -574,17 +585,19 @@ const Profile = () => {
                       </Button>
                     )}
                   </div>
-                  <p className="text-muted-foreground mb-2">{user?.email}</p>
-                  {user?.current_role && (
-                    <Badge variant="secondary" className="mb-2">
-                      {user.current_role}
-                    </Badge>
-                  )}
-                  {user?.experience_level && (
-                    <Badge variant="outline" className="ml-2">
-                      {user.experience_level}
-                    </Badge>
-                  )}
+                  <p className="text-muted-foreground mb-2 break-all text-sm md:text-base">{user?.email}</p>
+                  <div className="flex flex-wrap gap-2">
+                    {user?.current_role && (
+                      <Badge variant="secondary" className="mb-2">
+                        {user.current_role}
+                      </Badge>
+                    )}
+                    {user?.experience_level && (
+                      <Badge variant="outline" className="ml-2">
+                        {user.experience_level}
+                      </Badge>
+                    )}
+                  </div>
                 </div>
               </div>
             </CardContent>
