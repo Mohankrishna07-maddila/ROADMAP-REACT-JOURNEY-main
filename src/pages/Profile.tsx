@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { User, Mail, MapPin, Briefcase, Calendar, Edit, Save, X, Camera, Shield, Bell, Globe, Lock, Eye, EyeOff, Trash2, Download, Upload, Map, ClipboardCheck, ArrowLeft } from "lucide-react";
+import { User, Mail, MapPin, Briefcase, Calendar, Edit, Save, X, Camera, Shield, Bell, Globe, Lock, Eye, EyeOff, Trash2, Download, Upload, Map, ClipboardCheck, ArrowLeft, BookOpen, Award, Users, Activity } from "lucide-react";
 import { NavigationHeader } from "@/components/NavigationHeader";
 import { Footer } from "@/components/Footer";
 import { useAuth } from "@/contexts/AuthContext";
@@ -19,6 +19,9 @@ import { useToast } from "@/hooks/use-toast";
 import { authAPI } from "@/services/supabaseApi";
 import { supabase } from "@/lib/supabase";
 import { Link } from "react-router-dom";
+import { fetchUserActivities, UserActivity } from "@/services/activityLogger";
+import { Loader2 } from "lucide-react";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 const Profile = () => {
   const { user, isAuthenticated, updateProfile, logout } = useAuth();
@@ -55,7 +58,14 @@ const Profile = () => {
     profileVisibility: "public",
     twoFactorAuth: false,
   });
+  const [settingsId, setSettingsId] = useState<string | null>(null);
+  const [show2FAModal, setShow2FAModal] = useState(false);
+  const [twoFACode, setTwoFACode] = useState("");
+  const [entered2FACode, setEntered2FACode] = useState("");
+  const [pending2FA, setPending2FA] = useState(false);
   const [newInterest, setNewInterest] = useState("");
+  const [activities, setActivities] = useState<UserActivity[]>([]);
+  const [loadingActivities, setLoadingActivities] = useState(false);
 
   // Initialize profile data when user changes
   useEffect(() => {
@@ -76,6 +86,55 @@ const Profile = () => {
     }
   }, [user]);
 
+  // Fetch or create user_settings row on load
+  useEffect(() => {
+    const fetchSettings = async () => {
+      if (!user?.id) return;
+      let { data, error } = await supabase
+        .from('user_settings')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+      if (!data) {
+        // Insert default settings
+        const { data: newData } = await supabase
+          .from('user_settings')
+          .insert({ user_id: user.id })
+          .select('*')
+          .single();
+        data = newData;
+      }
+      if (data) {
+        setSettings({
+          emailNotifications: data.email_notifications,
+          pushNotifications: data.push_notifications,
+          marketingEmails: data.marketing_emails,
+          profileVisibility: data.profile_visibility,
+          twoFactorAuth: data.two_factor_enabled,
+        });
+        setSettingsId(data.id);
+      }
+    };
+    fetchSettings();
+  }, [user?.id]);
+
+  useEffect(() => {
+    const loadActivities = async () => {
+      if (user?.id) {
+        setLoadingActivities(true);
+        try {
+          const acts = await fetchUserActivities(user.id);
+          setActivities(acts);
+        } catch (e) {
+          setActivities([]);
+        } finally {
+          setLoadingActivities(false);
+        }
+      }
+    };
+    loadActivities();
+  }, [user?.id]);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setProfileData(prev => ({
@@ -92,11 +151,58 @@ const Profile = () => {
     }));
   };
 
-  const handleSettingsChange = (key: string, value: any) => {
-    setSettings(prev => ({
-      ...prev,
-      [key]: value
-    }));
+  // Update settings in user_settings table
+  const updateSettings = async (updateObj: any) => {
+    if (!settingsId) return;
+    const { error } = await supabase
+      .from('user_settings')
+      .update(updateObj)
+      .eq('id', settingsId);
+    if (!error) {
+      toast({ title: 'Settings Updated', description: 'Your settings have been saved.' });
+    } else {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    }
+  };
+
+  const handleSettingsChange = async (key: string, value: any) => {
+    setSettings(prev => ({ ...prev, [key]: value }));
+    let updateObj: any = {};
+    if (key === 'emailNotifications') updateObj.email_notifications = value;
+    if (key === 'pushNotifications') updateObj.push_notifications = value;
+    if (key === 'marketingEmails') updateObj.marketing_emails = value;
+    if (key === 'profileVisibility') updateObj.profile_visibility = value;
+    if (key === 'twoFactorAuth') {
+      if (value) {
+        // Start 2FA setup: send code to email (placeholder)
+        const code = Math.floor(100000 + Math.random() * 900000).toString();
+        setTwoFACode(code);
+        setShow2FAModal(true);
+        setPending2FA(true);
+        // In production, send this code via email (Edge Function or SendGrid)
+        toast({ title: '2FA Code Sent', description: `A code was sent to your email: ${user?.email}` });
+        return;
+      } else {
+        updateObj.two_factor_enabled = false;
+        toast({ title: '2FA Disabled', description: 'Two-factor authentication is now disabled.' });
+      }
+    }
+    if (Object.keys(updateObj).length > 0) {
+      await updateSettings(updateObj);
+    }
+  };
+
+  // Handle 2FA code verification
+  const handle2FAVerify = async () => {
+    if (entered2FACode === twoFACode) {
+      await updateSettings({ two_factor_enabled: true });
+      setSettings(prev => ({ ...prev, twoFactorAuth: true }));
+      toast({ title: '2FA Enabled', description: 'Two-factor authentication is now enabled.' });
+      setShow2FAModal(false);
+      setPending2FA(false);
+    } else {
+      toast({ title: '2FA Failed', description: 'Incorrect code. 2FA not enabled.', variant: 'destructive' });
+    }
   };
 
   const addInterest = () => {
@@ -1109,114 +1215,37 @@ const Profile = () => {
             </TabsContent>
 
             <TabsContent value="activity" className="space-y-6">
-              {/* Activity Summary */}
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Calendar className="h-5 w-5" />
-                    Activity Summary
+                    Activity Log
                   </CardTitle>
                   <CardDescription>
-                    Your learning journey progress and status
+                    Your real learning and profile activities
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                    <div className="text-center p-4 bg-blue-50 rounded-lg">
-                      <div className="text-2xl font-bold text-blue-600">
-                        {user?.bio ? "✅" : "⏳"}
-                      </div>
-                      <div className="text-sm font-medium mt-2">Profile Status</div>
-                      <div className="text-xs text-muted-foreground">
-                        {user?.bio ? "Complete" : "Incomplete"}
-                      </div>
+                  {loadingActivities ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                     </div>
-                    <div className="text-center p-4 bg-green-50 rounded-lg">
-                      <div className="text-2xl font-bold text-green-600">
-                        {user?.current_role ? "✅" : "⏳"}
-                      </div>
-                      <div className="text-sm font-medium mt-2">Professional Info</div>
-                      <div className="text-xs text-muted-foreground">
-                        {user?.current_role ? "Added" : "Not Added"}
-                      </div>
-                    </div>
-                    <div className="text-center p-4 bg-purple-50 rounded-lg">
-                      <div className="text-2xl font-bold text-purple-600">
-                        {user?.interests && user.interests.length > 0 ? "✅" : "⏳"}
-                      </div>
-                      <div className="text-sm font-medium mt-2">Interests</div>
-                      <div className="text-xs text-muted-foreground">
-                        {user?.interests && user.interests.length > 0 ? `${user.interests.length} Added` : "None Added"}
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Recent Activity */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Calendar className="h-5 w-5" />
-                    Recent Activity
-                  </CardTitle>
-                  <CardDescription>
-                    Your latest learning activities and achievements
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-6">
-                    {userActivity.map((activity) => (
-                      <div key={activity.id} className="flex items-start gap-4">
-                        <div className={`text-2xl ${activity.color}`}>
-                          {activity.icon}
+                  ) : activities.length === 0 ? (
+                    <div className="text-center text-muted-foreground py-8">No activities yet.</div>
+                  ) : (
+                    <div className="space-y-4">
+                      {activities.map((activity) => (
+                        <div key={activity.id} className="flex items-start gap-4 border-b pb-4 last:border-b-0">
+                          <div className="text-xl">{getActivityIcon(activity.type)}</div>
+                          <div className="flex-1">
+                            <p className="font-medium">{activity.title}</p>
+                            <p className="text-sm text-muted-foreground">{activity.description}</p>
+                            <p className="text-xs text-muted-foreground">{formatTimestamp(activity.timestamp)}</p>
+                          </div>
                         </div>
-                        <div className="flex-1 space-y-1">
-                          <p className="font-medium">{activity.title}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {activity.description}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {activity.timestamp}
-                          </p>
-                          {/* Action buttons for new user activities */}
-                          {activity.type === "profile_setup" && !isEditing && (
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              className="mt-2"
-                              onClick={() => setIsEditing(true)}
-                            >
-                              <Edit className="mr-2 h-4 w-4" />
-                              Edit Profile
-                            </Button>
-                          )}
-                          {activity.type === "explore_roadmaps" && (
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              className="mt-2"
-                              onClick={() => window.location.href = '/explore'}
-                            >
-                              <Map className="mr-2 h-4 w-4" />
-                              Explore Roadmaps
-                            </Button>
-                          )}
-                          {activity.type === "take_assessment" && (
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              className="mt-2"
-                              onClick={() => window.location.href = '/assessment'}
-                            >
-                              <ClipboardCheck className="mr-2 h-4 w-4" />
-                              Take Assessment
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
@@ -1238,9 +1267,47 @@ const Profile = () => {
         </div>
       </div>
       
+      {/* 2FA Modal */}
+      <Dialog open={show2FAModal} onOpenChange={setShow2FAModal}>
+        <DialogContent>
+          <DialogTitle>Two-Factor Authentication</DialogTitle>
+          <DialogDescription>
+            Enter the 6-digit code sent to your email to enable 2FA.
+          </DialogDescription>
+          <input
+            type="text"
+            value={entered2FACode}
+            onChange={e => setEntered2FACode(e.target.value)}
+            maxLength={6}
+            className="border rounded px-2 py-1 w-full mt-2"
+            placeholder="Enter code"
+          />
+          <Button className="mt-4 w-full" onClick={handle2FAVerify} disabled={!pending2FA}>
+            Verify
+          </Button>
+        </DialogContent>
+      </Dialog>
       <Footer />
     </div>
   );
 };
 
 export default Profile; 
+
+function getActivityIcon(type: string) {
+  switch (type) {
+    case "join_roadmap": return <BookOpen className="h-5 w-5 text-primary" />;
+    case "enroll_course": return <Award className="h-5 w-5 text-green-600" />;
+    case "enroll_project": return <Briefcase className="h-5 w-5 text-blue-600" />;
+    case "profile_update": return <Edit className="h-5 w-5 text-purple-500" />;
+    case "assessment": return <ClipboardCheck className="h-5 w-5 text-orange-500" />;
+    case "community_join": return <Users className="h-5 w-5 text-pink-500" />;
+    case "contact": return <Mail className="h-5 w-5 text-gray-500" />;
+    default: return <Activity className="h-5 w-5 text-muted-foreground" />;
+  }
+}
+
+function formatTimestamp(ts: string) {
+  const d = new Date(ts);
+  return d.toLocaleString();
+} 

@@ -1,5 +1,7 @@
 import { RoadmapCard } from "./RoadmapCard";
-import { Code, Database, Globe, Smartphone, Brain, Shield, PenTool, TrendingUp } from "lucide-react";
+import { Code, Database, Globe, Smartphone, Brain, Shield, PenTool, TrendingUp, ArrowLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 const roadmaps = [
   {
@@ -88,6 +90,15 @@ export function RoadmapGrid() {
   return (
     <section className="py-20 bg-gradient-to-b from-background to-muted/30">
       <div className="container mx-auto px-4">
+        {/* Back to Home Button */}
+        <div className="mb-4">
+          <Button asChild variant="ghost" size="sm" className="inline-flex items-center gap-2">
+            <Link to="/">
+              <ArrowLeft className="h-4 w-4" />
+              Back to Home
+            </Link>
+          </Button>
+        </div>
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">
             Choose Your Career Path

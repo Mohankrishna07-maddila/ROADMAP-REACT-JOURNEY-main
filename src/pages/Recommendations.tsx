@@ -10,6 +10,7 @@ import { useState } from "react";
 import { useRoadmapClicks } from "@/contexts/RoadmapClickContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { logUserActivity } from "@/services/activityLogger";
 
 const courses = [
   {
@@ -162,7 +163,7 @@ const certifications = [
 export default function Recommendations() {
   const [previewModal, setPreviewModal] = useState<string | null>(null);
   const { incrementClick, getClickCount, isAuthenticated, hasUserClicked } = useRoadmapClicks();
-  const { isAuthenticated: authIsAuthenticated } = useAuth();
+  const { isAuthenticated: authIsAuthenticated, user } = useAuth();
   const { toast } = useToast();
 
   const getPriorityColor = (priority: string) => {
@@ -178,7 +179,7 @@ export default function Recommendations() {
     window.open(previewUrl, '_blank');
   };
 
-  const handleCourseEnroll = (courseTitle: string, courseUrl: string) => {
+  const handleCourseEnroll = async (courseTitle: string, courseUrl: string) => {
     if (!authIsAuthenticated) {
       toast({
         title: "Sign in required",
@@ -188,6 +189,16 @@ export default function Recommendations() {
       window.location.href = '/login';
       return;
     }
+    // Log activity
+    try {
+      await logUserActivity({
+        user_id: user?.id,
+        type: "enroll_course",
+        title: "Enrolled in Certification",
+        description: `You enrolled in ${courseTitle}.`,
+        metadata: { course: courseTitle },
+      });
+    } catch (e) { /* ignore logging errors for now */ }
     const wasCounted = incrementClick(`course-${courseTitle}`);
     if (wasCounted) {
       toast({
@@ -203,7 +214,17 @@ export default function Recommendations() {
     window.open(courseUrl, '_blank');
   };
 
-  const handleProjectStart = (projectTitle: string) => {
+  const handleProjectStart = async (projectTitle: string) => {
+    // Log activity
+    try {
+      await logUserActivity({
+        user_id: user?.id,
+        type: "enroll_project",
+        title: "Started Project",
+        description: `You started the ${projectTitle} project.`,
+        metadata: { project: projectTitle },
+      });
+    } catch (e) { /* ignore logging errors for now */ }
     // Open a project starter template or documentation
     const starterUrls = {
       "E-commerce Website with React": "https://create-react-app.dev/",

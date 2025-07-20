@@ -1,6 +1,9 @@
 import React from "react";
 import { useParams } from "react-router-dom";
 import { motion } from "framer-motion";
+import { ArrowLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 const roadmapData = {
   frontend: {
@@ -167,6 +170,15 @@ export default function CareerRoadmap() {
   const data = roadmapData[path] || roadmapData["frontend"];
   return (
     <div className="container mx-auto py-8">
+      {/* Back to Home Button */}
+      <div className="mb-4">
+        <Button asChild variant="ghost" size="sm" className="inline-flex items-center gap-2">
+          <Link to="/">
+            <ArrowLeft className="h-4 w-4" />
+            Back to Home
+          </Link>
+        </Button>
+      </div>
       <motion.h1 initial={{ opacity: 0, y: -30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="text-3xl font-bold mb-4 text-center">{data.title}</motion.h1>
       <motion.img src={data.banner} alt={data.title + " Banner"} className="w-full max-w-2xl mx-auto rounded shadow-lg mb-8" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3, duration: 0.8 }} />
       <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5, duration: 0.8 }} className="mb-8 text-lg text-center">

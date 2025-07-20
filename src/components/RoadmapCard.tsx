@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { useRoadmapClicks } from "@/contexts/RoadmapClickContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { logUserActivity } from "@/services/activityLogger";
 
 interface RoadmapCardProps {
   title: string;
@@ -30,10 +31,10 @@ export function RoadmapCard({
 }: RoadmapCardProps) {
   const navigate = useNavigate();
   const { incrementClick, getClickCount, isAuthenticated, hasUserClicked } = useRoadmapClicks();
-  const { isAuthenticated: authIsAuthenticated } = useAuth();
+  const { isAuthenticated: authIsAuthenticated, user } = useAuth();
   const { toast } = useToast();
   
-  const handleStartLearning = () => {
+  const handleStartLearning = async () => {
     if (!authIsAuthenticated) {
       // Show sign-in prompt for unauthenticated users
       toast({
@@ -45,6 +46,17 @@ export function RoadmapCard({
       navigate('/login');
       return;
     }
+
+    // Log activity
+    try {
+      await logUserActivity({
+        user_id: user?.id,
+        type: "join_roadmap",
+        title: userHasClicked ? "Continued Roadmap" : "Started Roadmap",
+        description: `You ${userHasClicked ? "continued" : "started"} the ${title} roadmap.`,
+        metadata: { roadmap: title, path },
+      });
+    } catch (e) { /* ignore logging errors for now */ }
 
     const wasCounted = incrementClick(path);
     if (wasCounted) {

@@ -176,10 +176,15 @@ export default function Explore() {
       <NavigationHeader />
       
       <main className="container mx-auto px-4 py-8">
-        <Link to="/" className="inline-flex items-center text-muted-foreground hover:text-foreground mb-6">
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Home
-        </Link>
+        {/* Back to Home Button */}
+        <div className="mb-4">
+          <Button asChild variant="ghost" size="sm" className="inline-flex items-center gap-2">
+            <Link to="/">
+              <ArrowLeft className="h-4 w-4" />
+              Back to Home
+            </Link>
+          </Button>
+        </div>
 
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-4">Explore All Roadmaps</h1>
