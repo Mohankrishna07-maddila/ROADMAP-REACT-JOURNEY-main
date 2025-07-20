@@ -90,15 +90,7 @@ export function RoadmapGrid() {
   return (
     <section className="py-20 bg-gradient-to-b from-background to-muted/30">
       <div className="container mx-auto px-4">
-        {/* Back to Home Button */}
-        <div className="mb-4">
-          <Button asChild variant="ghost" size="sm" className="inline-flex items-center gap-2">
-            <Link to="/">
-              <ArrowLeft className="h-4 w-4" />
-              Back to Home
-            </Link>
-          </Button>
-        </div>
+        {/* Removed Back to Home Button */}
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">
             Choose Your Career Path
